@@ -20,3 +20,10 @@ mybatis:
   type-aliases-package: com.example.demo_app.model
   configuration:
     map-underscore-to-camel-case: true
+
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: ${OPENAI_BASE_URL}
+      api-key: ${OPENAI_API_KEY}
+      model-name: ${OPENAI_MODEL}
