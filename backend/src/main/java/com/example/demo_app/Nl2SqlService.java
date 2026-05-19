@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class Nl2SqlService {
 
+    private final SqlAssistant sqlAssistant;
     private final IntentClassifier intentClassifier;
     private final DatabaseSchemaService databaseSchemaService;
 
@@ -37,7 +38,16 @@ public class Nl2SqlService {
         if (intent != null && intent.toUpperCase().startsWith("NO")) {
             return new QueryResult(null, null, "데이터 조회와 관련 없는 질문입니다.");
         }
+
+        // Step 2: SQL Generation
+        String sql = sqlAssistant.generateSql(schema, question);
+        sql = sanitize(sql);
+        log.info("\nStep 2 (SQL):\n{}", sql);
         
         return new QueryResult(sql, data, answer);
+    }
+
+    private String sanitize(String sql) {
+        return sql.replace("```sql", "").replace("```", "").trim();
     }
 }
