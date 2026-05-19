@@ -1,17 +1,13 @@
 package com.example.demo_app;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import com.example.demo_app.dto.QueryResult;
+import com.example.demo_app.mapper.RawSqlMapper;
 
-import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,6 +18,8 @@ public class Nl2SqlService {
 
     private final SqlAssistant sqlAssistant;
     private final IntentClassifier intentClassifier;
+    private final AnswerGenerator answerGenerator;
+    private final RawSqlMapper rawSqlMapper;
     private final DatabaseSchemaService databaseSchemaService;
 
     public QueryResult ask(String question) {
@@ -43,6 +41,20 @@ public class Nl2SqlService {
         String sql = sqlAssistant.generateSql(schema, question);
         sql = sanitize(sql);
         log.info("\nStep 2 (SQL):\n{}", sql);
+
+        // Step 3: Execution
+        List<Map<String, Object>> data;
+        try {
+            data = rawSqlMapper.executeRawSql(sql);
+        } catch (Exception e) {
+            System.err.println("Execution Error: " + e.getMessage());
+            return new QueryResult(sql, null, "쿼리 실행 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        log.info("\nStep 3 (Data):\n{} ", data);
+
+        // Step 4: Answer Generation
+        answer = answerGenerator.generateAnswer(question, data.toString());
+        log.info("\nStep 4 (Answer):\n{} ", answer);
         
         return new QueryResult(sql, data, answer);
     }
