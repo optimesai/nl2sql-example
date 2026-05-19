@@ -39,10 +39,11 @@ public class Nl2SqlService {
         log.info("\nStep 0 (Schema):\n{}", schema);
 
         // Step 1: Intent Classification
-        String intent = intentClassifier.classify(question, schema, currentTime);
-        log.info("\nStep 1 (Intent Raw):\n{}", intent);
+        String rawIntent = intentClassifier.classify(question, schema, currentTime);
+        String intent = rawIntent != null ? rawIntent.toUpperCase().replaceAll("[^A-Z]", "") : "";
+        log.info("\nStep 1 (Intent Raw):\n{}", rawIntent);
 
-        if (intent != null && intent.toUpperCase().startsWith("NO")) {
+        if (intent.contains("NO")) {
             return new QueryResult(null, null, "데이터 조회와 관련 없는 질문입니다.");
         }
 
