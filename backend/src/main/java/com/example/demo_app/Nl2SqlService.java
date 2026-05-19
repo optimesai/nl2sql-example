@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class Nl2SqlService {
 
+    private final IntentClassifier intentClassifier;
     private final DatabaseSchemaService databaseSchemaService;
 
     public QueryResult ask(String question) {
@@ -29,10 +30,13 @@ public class Nl2SqlService {
         String schema = databaseSchemaService.getSchemaDescription();
         log.info("\nStep 0 (Schema):\n{}", schema);
 
-        // Remove potential backticks if LLM includes them
-        sql = sql.replace("```sql", "").replace("```", "").trim();
-        
-        System.out.println("Generated SQL: " + sql);
+        // Step 1: Intent Classification
+        String intent = intentClassifier.classify(question, schema);
+        log.info("\nStep 1 (Intent Raw):\n{}", intent);
+
+        if (intent != null && intent.toUpperCase().startsWith("NO")) {
+            return new QueryResult(null, null, "데이터 조회와 관련 없는 질문입니다.");
+        }
         
         return new QueryResult(sql, data, answer);
     }
