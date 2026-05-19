@@ -1,5 +1,7 @@
 package com.example.demo_app;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -23,16 +25,17 @@ public class Nl2SqlService {
     private final DatabaseSchemaService databaseSchemaService;
 
     public QueryResult ask(String question) {
-        String answer;
-
         log.info("\nQuestion: {} \n", question);
-        
+
+        String answer;
+        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
         // Step 0: Get dynamic schema
         String schema = databaseSchemaService.getSchemaDescription();
         log.info("\nStep 0 (Schema):\n{}", schema);
 
         // Step 1: Intent Classification
-        String intent = intentClassifier.classify(question, schema);
+        String intent = intentClassifier.classify(question, schema, currentTime);
         log.info("\nStep 1 (Intent Raw):\n{}", intent);
 
         if (intent != null && intent.toUpperCase().startsWith("NO")) {
@@ -40,9 +43,9 @@ public class Nl2SqlService {
         }
 
         // Step 2: SQL Generation
-        String sql = sqlAssistant.generateSql(schema, question);
+        String sql = sqlAssistant.generateSql(schema, question, currentTime);
         sql = sanitize(sql);
-        log.info("\nStep 2 (SQL):\n{}", sql);
+        log.info("Step 2 (SQL): {}", sql);
 
         // Step 2.5: Security Validation
         if (!isSafeSelectQuery(sql)) {
