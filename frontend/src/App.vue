@@ -13,6 +13,12 @@ const messages = ref<Message[]>([]);
 const isLoading = ref(false);
 const chatContainer = ref<HTMLElement | null>(null);
 
+const employeeId = ref(localStorage.getItem('employeeId') || '');
+
+const saveId = () => {
+  localStorage.setItem('employeeId', employeeId.value);
+};
+
 const scrollToBottom = async () => {
   await nextTick();
   if (chatContainer.value) {
@@ -36,7 +42,10 @@ const ask = async () => {
   try {
     const response = await fetch('/api/query', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-Employee-Id': employeeId.value
+      },
       body: JSON.stringify({ question: userMsg })
     });
     
@@ -65,6 +74,20 @@ const ask = async () => {
         Production NL2SQL
       </h1>
       
+      <div class="flex flex-col gap-4">
+        <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">User Profile</h2>
+        <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+          <label class="text-xs text-gray-400 block mb-1">Employee ID (사번)</label>
+          <input 
+            v-model="employeeId"
+            @change="saveId"
+            type="text" 
+            placeholder="사번 입력"
+            class="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+      </div>
+
       <div class="flex flex-col gap-4">
         <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dashboard</h2>
         <div class="grid grid-cols-1 gap-3">

@@ -1,5 +1,7 @@
 package com.example.demo_app;
 
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.message.AiMessage;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -23,12 +25,14 @@ public class Nl2SqlService {
     private final AnswerGenerator answerGenerator;
     private final RawSqlMapper rawSqlMapper;
     private final DatabaseSchemaService databaseSchemaService;
+    private final ChatHistoryService chatHistoryService;
 
-    public QueryResult ask(String question) {
-        log.info("\nQuestion: {} \n", question);
-
+    public QueryResult ask(String question, String employeeId) {
+        log.info("\nQuestion: {} (Employee: {}) \n", question, employeeId);
+        
         String answer;
         String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String history = chatHistoryService.getHistory(employeeId).toString();
 
         // Step 0: Get dynamic schema
         String schema = databaseSchemaService.getSchemaDescription();
@@ -43,7 +47,8 @@ public class Nl2SqlService {
         }
 
         // Step 2: SQL Generation
-        String sql = sqlAssistant.generateSql(schema, question, currentTime);
+        String contextWithHistory = schema + "\n\nPrevious Conversation History:\n" + history;
+        String sql = sqlAssistant.generateSql(contextWithHistory, question, currentTime);
         sql = sanitize(sql);
         log.info("Step 2 (SQL): {}", sql);
 
@@ -66,6 +71,10 @@ public class Nl2SqlService {
         // Step 4: Answer Generation
         answer = answerGenerator.generateAnswer(question, data.toString());
         log.info("\nStep 4 (Answer):\n{} ", answer);
+        
+        // Save to history
+        chatHistoryService.addMessage(employeeId, UserMessage.from(question));
+        chatHistoryService.addMessage(employeeId, AiMessage.from(answer));
         
         return new QueryResult(sql, data, answer);
     }
