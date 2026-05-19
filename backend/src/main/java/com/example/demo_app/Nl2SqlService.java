@@ -78,12 +78,16 @@ public class Nl2SqlService {
         if (sql == null || sql.isEmpty()) return false;
         
         String upperSql = sql.toUpperCase().trim();
+        int length = upperSql.length();
         
         // 1. Must start with SELECT
         if (!upperSql.startsWith("SELECT")) return false;
         
-        // 2. No multi-statements
-        if (upperSql.contains(";")) return false;
+        // 2. No multi-statements (allowing only trailing semicolon)
+        int semicolonIndex = upperSql.indexOf(';');
+        if (semicolonIndex != -1 && semicolonIndex < length - 1) {
+            return false;
+        }
         
         // 3. Block dangerous keywords
         String[] forbiddenKeywords = {"INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "TRUNCATE", "CREATE"};
