@@ -25,6 +25,8 @@ public class Nl2SqlService {
     public QueryResult ask(String question) {
         String answer;
 
+        log.info("\nQuestion: {} \n", question);
+        
         // Step 0: Get dynamic schema
         String schema = databaseSchemaService.getSchemaDescription();
         log.info("\nStep 0 (Schema):\n{}", schema);
