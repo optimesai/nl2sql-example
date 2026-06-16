@@ -13,17 +13,29 @@ LangChain4j 기반 NL2SQL PoC 프로젝트. 자연어 질문을 SQL로 변환하
      → AnswerGenerator(자연어 응답 생성)
 ```
 
-## 실행
+## 실행 (로컬 빌드 + Docker)
+
+Spring Boot 3.2+ jarmode extract로 레이어를 분리하여 Docker layer cache를 극대화합니다. dependencies 레이어는 변경이 거의 없어 캐시 재사용되고, application 레이어만 자주 갱신됩니다.
 
 ```bash
-# DB 실행
-cd backend && docker compose up -d mysql
+cd backend
 
-# 백엔드 실행
-./gradlew bootRun
+# 1. 로컬 JAR 빌드 + 레이어 추출
+./gradlew bootJar -x test --parallel
+java -Djarmode=tools -jar build/libs/app.jar extract --layers --launcher --destination build/extracted
 
-# 프론트엔드 실행 (선택)
-cd ../frontend && npm install && npm run dev
+# 2. Docker 빌드 + 실행
+docker compose up -d app --build
+
+# 3. 로그 확인
+docker logs -f nl2sql-app
+```
+
+> `run_docker.sh` (Linux) / `run_docker.ps1` (Windows) 스크립트로 1~4단계를 자동화할 수 있습니다.
+
+프론트엔드 실행:
+```bash
+cd frontend && npm install && npm run dev
 ```
 
 ## API
